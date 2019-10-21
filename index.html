@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <body>
+      <script>
+        //why are we returning a promise? Doesn't fetch return a promise?
+        const grabData = endpoint => {
+          new Promise((res, rej) => {
+            return window
+              .fetch(`https://acme-users-api-rev.herokuapp.com/api/${ednpoint}`)
+              .then(response => response.json())
+              .then(jsonData => res(jsonData))
+              .catch(e => rej(e));
+          });
+        };
+
+        const findProductsInPriceRange = (products, rangeObj) =>
+          products.filter(
+            product =>
+              product.price > rangeObj.min && product.price < rangeObj.min
+          );
+
+        const groupCompaniesByLetter = companies =>
+          companies.reduce((groupedCompanies, company) => {
+            if (groupedCompanies[company.name[0]]) {
+              groupedCompanies[company.name[0]].push(company);
+            } else {
+              groupedCompanies[company.name[0]] = [company];
+            }
+            return groupedCompanies;
+          }, {});
+
+        const groupCompaniesByState = companies =>
+          companies.reduce((groupedCompanies, company) => {
+            if (groupedCompanies[company.state]) {
+              groupedCompanies[company.state].push(company);
+            } else {
+              groupedCompanies[company.state] = [company];
+            }
+            return groupedCompanies;
+          }, {});
+
+        const processOfferings = (companies, products, offerings) =>
+          offerings.map(offering => {
+            return {
+              id: offering.id,
+              company: companies.filter(
+                company => company.id === offering.companyId
+              )[0],
+              product: produces.filter(
+                product => product.id === offering.productId
+              )[0]
+            };
+          });
+
+        const compainesByNumberOfOfferings = (companies, offerings, number) => {
+          companiesOccuringNTimes = [];
+          const offeringsByCompany = offerings.reduce(
+            (countCompanies, offering) => {
+              if (countCompanies[offering.companyId]) {
+                ++countCompanies[offering.companyId];
+              } else {
+                countCompanies[offering.companyId] = 1;
+              }
+              return countCompanies;
+            },
+            {}
+          );
+          for (companyId in offeringsByCompany) {
+            if (offeringsByCompany[companyId] >= number) {
+              companiesOccuringNTimes.push(
+                companies.filter(company => company.id === companyId)[0]
+              );
+            }
+          }
+          return companiesOccuringNTimes;
+        };
+
+        const processProducts = (products, offerings) =>
+          products.map(product => {
+            let productOfferings = offerings.filter(
+              offering => offering.productId === product.id
+            );
+            return {
+              productId: product.id,
+              avgOfferingPrice:
+                productOfferings.reduce((prices, offering) => {
+                  return prices + offering.price;
+                }, 0) / productOfferings.length
+            };
+          });
+
+        const prom = new Promise((res, rej) => {
+          console.log('i always res');
+          res('I resolved');
+        });
+        console.log(prom);
+        console.log(prom);
+        console.log(prom);
+        console.log(prom);
+        console.log(prom);
+        setTimeout(function() {
+          console.log(
+            prom.then(d => {
+              console.log(d);
+            })
+          );
+        }, 0);
+      </script>
+    </body>
+  </head>
+</html>
