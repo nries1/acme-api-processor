@@ -1,112 +1,167 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <body>
-      <script>
-        //why are we returning a promise? Doesn't fetch return a promise?
-        const grabData = endpoint => {
-          new Promise((res, rej) => {
-            return window
-              .fetch(`https://acme-users-api-rev.herokuapp.com/api/${ednpoint}`)
-              .then(response => response.json())
-              .then(jsonData => res(jsonData))
-              .catch(e => rej(e));
-          });
-        };
-
-        const findProductsInPriceRange = (products, rangeObj) =>
-          products.filter(
-            product =>
-              product.price > rangeObj.min && product.price < rangeObj.min
-          );
-
-        const groupCompaniesByLetter = companies =>
-          companies.reduce((groupedCompanies, company) => {
-            if (groupedCompanies[company.name[0]]) {
-              groupedCompanies[company.name[0]].push(company);
-            } else {
-              groupedCompanies[company.name[0]] = [company];
-            }
-            return groupedCompanies;
-          }, {});
-
-        const groupCompaniesByState = companies =>
-          companies.reduce((groupedCompanies, company) => {
-            if (groupedCompanies[company.state]) {
-              groupedCompanies[company.state].push(company);
-            } else {
-              groupedCompanies[company.state] = [company];
-            }
-            return groupedCompanies;
-          }, {});
-
-        const processOfferings = (companies, products, offerings) =>
-          offerings.map(offering => {
-            return {
-              id: offering.id,
-              company: companies.filter(
-                company => company.id === offering.companyId
-              )[0],
-              product: produces.filter(
-                product => product.id === offering.productId
-              )[0]
-            };
-          });
-
-        const compainesByNumberOfOfferings = (companies, offerings, number) => {
-          companiesOccuringNTimes = [];
-          const offeringsByCompany = offerings.reduce(
-            (countCompanies, offering) => {
-              if (countCompanies[offering.companyId]) {
-                ++countCompanies[offering.companyId];
-              } else {
-                countCompanies[offering.companyId] = 1;
-              }
-              return countCompanies;
-            },
-            {}
-          );
-          for (companyId in offeringsByCompany) {
-            if (offeringsByCompany[companyId] >= number) {
-              companiesOccuringNTimes.push(
-                companies.filter(company => company.id === companyId)[0]
-              );
-            }
-          }
-          return companiesOccuringNTimes;
-        };
-
-        const processProducts = (products, offerings) =>
-          products.map(product => {
-            let productOfferings = offerings.filter(
-              offering => offering.productId === product.id
-            );
-            return {
-              productId: product.id,
-              avgOfferingPrice:
-                productOfferings.reduce((prices, offering) => {
-                  return prices + offering.price;
-                }, 0) / productOfferings.length
-            };
-          });
-
-        const prom = new Promise((res, rej) => {
-          console.log('i always res');
-          res('I resolved');
-        });
-        console.log(prom);
-        console.log(prom);
-        console.log(prom);
-        console.log(prom);
-        console.log(prom);
-        setTimeout(function() {
-          console.log(
-            prom.then(d => {
-              console.log(d);
-            })
-          );
-        }, 0);
-      </script>
-    </body>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style></style>
   </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      window.addEventListener('hashchange', e => {
+        console.log('hash change event ', e.currentTarget.location.hash);
+        const prodId = e.currentTarget.location.hash.replace(/#productid=/, '');
+        if (prodId === '') {
+          populateTheDom(allFetches.products);
+        } else {
+          populateTheDom(
+            allFetches.products.filter(product => product.id === prodId)
+          );
+        }
+      });
+
+      let allFetches = {};
+      //why are we returning a promise? Doesn't fetch return a promise?
+      const grabData = endpoint => {
+        return new Promise((res, rej) => {
+          return window
+            .fetch(`https://acme-users-api-rev.herokuapp.com/api/${endpoint}`)
+            .then(response => response.json())
+            .then(jsonData => {
+              res(jsonData);
+            })
+            .catch(err => {
+              rej(e);
+            });
+        });
+      };
+
+      grabCompanies = () => new Promise();
+
+      const getAllEndpointpoints = () => {
+        console.log('grabbing endpoints');
+        const companies = grabData('companies');
+        const products = grabData('products');
+        const offerings = grabData('offerings');
+        Promise.all([companies, products, offerings]).then(values => {
+          allFetches.companies = values[0];
+          allFetches.products = values[1];
+          allFetches.offerings = values[2];
+          allFetches.processed_offerings = processOfferings(
+            values[0],
+            values[1],
+            values[2]
+          );
+          console.log('resolution of promise.all', values);
+          populateTheDom(allFetches.products);
+        });
+      };
+
+      const populateTheDom = products => {
+        console.log(allFetches);
+        const app = document.getElementById('app');
+        app.innerHTML = '';
+        products.forEach(product => {
+          let url =
+            'file:///Users/nicolasries/fullstack/acme-api-processor/index.html#';
+          const div = document.createElement('DIV');
+          div.className = 'products';
+          div.id = product.id;
+          if (products.length > 1) url += `productid=${product.id}`;
+          div.innerHTML = `<a class='product-title' href='${url}'>${product.name}</a>
+          <div>${product.description}</div>
+          <div>$${product.suggestedPrice}</div>`;
+          const offerings = allFetches.processed_offerings.filter(
+            offering => offering.product.id === product.id
+          );
+          console.log(offerings);
+          div.innerHTML += `<ul>`;
+          offerings.forEach(offering => {
+            div.innerHTML += `<li>Offered by: ${offering.company.name} $${offering.offering.price}</li>`;
+          });
+          div.innerHTML += `</ul>`;
+          app.appendChild(div);
+        });
+      };
+
+      const getOfferingsByProduct = productId => allFetches;
+
+      getAllEndpointpoints();
+
+      const findProductsInPriceRange = (products, rangeObj) =>
+        products.filter(
+          product =>
+            product.price > rangeObj.min && product.price < rangeObj.min
+        );
+
+      const groupCompaniesByLetter = companies =>
+        companies.reduce((groupedCompanies, company) => {
+          if (groupedCompanies[company.name[0]]) {
+            groupedCompanies[company.name[0]].push(company);
+          } else {
+            groupedCompanies[company.name[0]] = [company];
+          }
+          return groupedCompanies;
+        }, {});
+
+      const groupCompaniesByState = companies =>
+        companies.reduce((groupedCompanies, company) => {
+          if (groupedCompanies[company.state]) {
+            groupedCompanies[company.state].push(company);
+          } else {
+            groupedCompanies[company.state] = [company];
+          }
+          return groupedCompanies;
+        }, {});
+
+      const processOfferings = (companies, products, offerings) =>
+        offerings.map(offering => {
+          return {
+            offering,
+            company: companies.filter(
+              company => company.id === offering.companyId
+            )[0],
+            product: products.filter(
+              product => product.id === offering.productId
+            )[0]
+          };
+        });
+
+      const compainesByNumberOfOfferings = (companies, offerings, number) => {
+        companiesOccuringNTimes = [];
+        const offeringsByCompany = offerings.reduce(
+          (countCompanies, offering) => {
+            if (countCompanies[offering.companyId]) {
+              ++countCompanies[offering.companyId];
+            } else {
+              countCompanies[offering.companyId] = 1;
+            }
+            return countCompanies;
+          },
+          {}
+        );
+        for (companyId in offeringsByCompany) {
+          if (offeringsByCompany[companyId] >= number) {
+            companiesOccuringNTimes.push(
+              companies.filter(company => company.id === companyId)[0]
+            );
+          }
+        }
+        return companiesOccuringNTimes;
+      };
+
+      const processProducts = (products, offerings) =>
+        products.map(product => {
+          let productOfferings = offerings.filter(
+            offering => offering.productId === product.id
+          );
+          return {
+            productId: product.id,
+            avgOfferingPrice:
+              productOfferings.reduce((prices, offering) => {
+                return prices + offering.price;
+              }, 0) / productOfferings.length
+          };
+        });
+    </script>
+  </body>
 </html>
