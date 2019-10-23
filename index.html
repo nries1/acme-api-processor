@@ -2,21 +2,48 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+      crossorigin="anonymous"
+    />
+
     <style></style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <h1>Acme w. Bootstrap and Axios VJS</h1>
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a
+            class="nav-link active"
+            href="file:///Users/nicolasries/fullstack/acme-api-processor/index.html#companies"
+            >Companies</a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link"
+            href="file:///Users/nicolasries/fullstack/acme-api-processor/index.html#products"
+            >Products</a
+          >
+        </li>
+      </ul>
+      <div id="table-container">
+        <h3 id="table-title"></h3>
+        <table id="table" class="table"></table>
+      </div>
+    </div>
     <script>
       window.addEventListener('hashchange', e => {
+        e.preventDefault();
         console.log('hash change event ', e.currentTarget.location.hash);
-        const prodId = e.currentTarget.location.hash.replace(/#productid=/, '');
-        if (prodId === '') {
-          populateTheDom(allFetches.products);
-        } else {
-          populateTheDom(
-            allFetches.products.filter(product => product.id === prodId)
-          );
-        }
+
+        const tableType = e.currentTarget.location.hash.replace(/#/, '');
+        grabData(tableType).then(data => {
+          populateTable(data);
+        });
       });
 
       let allFetches = {};
@@ -35,7 +62,38 @@
         });
       };
 
-      grabCompanies = () => new Promise();
+      window.addEventListener('load', function() {
+        grabData('companies').then(d => {
+          console.log(d);
+          populateTable(d);
+        });
+      });
+
+      populateTable = arr => {
+        const headers = Object.keys(arr[0]);
+        const table = document.getElementById('table');
+        table.innerHTML = '';
+        table.appendChild(createHeaderRow(headers));
+        arr.forEach(item => {
+          let row = document.createElement('TR');
+          for (let key in item) {
+            let cell = document.createElement('TD');
+            cell.innerHTML = item[key];
+            row.appendChild(cell);
+          }
+          table.appendChild(row);
+        });
+      };
+
+      const createHeaderRow = headers => {
+        const row = document.createElement('TR');
+        headers.forEach(header => {
+          let cell = document.createElement('TH');
+          cell.innerHTML = header;
+          row.appendChild(cell);
+        });
+        return row;
+      };
 
       const getAllEndpointpoints = () => {
         console.log('grabbing endpoints');
@@ -85,7 +143,7 @@
 
       const getOfferingsByProduct = productId => allFetches;
 
-      getAllEndpointpoints();
+      //getAllEndpointpoints();
 
       const findProductsInPriceRange = (products, rangeObj) =>
         products.filter(
